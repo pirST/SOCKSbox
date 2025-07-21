@@ -3,7 +3,7 @@
   "name": "SOCKSbox",
   "version": "0.2",
   "description": "Extension to set multiple SOCKS5 proxy",
-  "permissions": ["proxy", "storage", "activeTab"],
+  "permissions": ["proxy", "storage"],
   "background": {
     "service_worker": "background.js"
   },
