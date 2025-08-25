@@ -7,7 +7,7 @@ A Chrome extension for managing SOCKS5 proxy connections with an intuitive user 
 -  **Active Proxy Indicator**: Clearly see which proxy is currently active
 -  **Persistent Storage**: Proxy configurations are saved and persist between browser sessions
 -  **Connection Management**: When you delete an active proxy, the connection is automatically disabled
--  **Traffic Routing**: Configure which hosts go through proxy and which go direct, including *site.net match patterns
+-  **Traffic Routing**: Configure which hosts go through proxy and which go direct.
 -  **Default Actions**: Set default behavior for traffic not matching specific rules
 
 ## Installation
