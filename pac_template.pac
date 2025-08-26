@@ -1,21 +1,23 @@
 function FindProxyForURL(url, host) {
-    function hasStringStartingSortedWithOptimized(sortedArray, prefix) {
-        if (sortedArray.length === 0) return false;
-        if (prefix === "") return true;
-        var left = 0;
-        var right = sortedArray.length;
-        while (left < right) {
-            var mid = Math.floor((left + right) / 2);
-            var current = sortedArray[mid];
-            if (current < prefix) {
-                left = mid + 1;
-            } else {
-                right = mid;
-            }
+    
+    function hasStringStartingSortedWithOptimized(sortedPrefixes, str) {
+        if (sortedPrefixes.length === 0) return false;
+        if (sortedPrefixes[0] === "") return true;
+    
+        for (var i = 0; i < sortedPrefixes.length; i++) {
+            var prefix = sortedPrefixes[i];
+            if (prefix.length > str.length) break;
+            if (str.startsWith(prefix)) return true;
         }
-        return left < sortedArray.length && sortedArray[left].indexOf(prefix) === 0;
+        return false;
     }
 
+    function reverseString(str) {
+        let r = '';
+        for (let j = str.length - 1; j >= 0; j--) r += str[j];
+        return r
+    }
+    
     var PROXY_LIST = /*{{PROXY_LIST}}*/;
     var DIRECT_LIST = /*{{DIRECT_LIST}}*/;
 
@@ -28,7 +30,8 @@ function FindProxyForURL(url, host) {
         isInNet(host, "127.0.0.0", "255.255.255.0")) {
         return "DIRECT";
     }
-
+    
+    host=reverseString(host)
     if (DIRECT_LIST.length && hasStringStartingSortedWithOptimized(DIRECT_LIST, host)) return "DIRECT";
     if (PROXY_LIST.length && hasStringStartingSortedWithOptimized(PROXY_LIST, host)) return /*{{PROXY_RETURN}}*/;
     return /*{{DEFAULT_ACTION}}*/;
