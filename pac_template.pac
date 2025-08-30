@@ -9,9 +9,6 @@ function FindProxyForURL(url, host) {
             // if (prefix.length > str.length) break;
             if (str.startsWith(prefix)) return true;
         }
-        alert(sortedPrefixes);
-        alert(str);
-        alert("hasStringStartingSortedWithOptimized false");
         return false;
     }
 
@@ -33,13 +30,9 @@ function FindProxyForURL(url, host) {
         isInNet(host, "127.0.0.0", "255.255.255.0")) {
         return "DIRECT";
     }
-    // alert(host);
-    // alert(PROXY_LIST);
     
     hostReverse=reverseString(host)
     
-    // alert("hi "+host);
-
     if (DIRECT_LIST.length && hasStringStartingSortedWithOptimized(DIRECT_LIST, hostReverse)) return "DIRECT";
     if (PROXY_LIST.length && hasStringStartingSortedWithOptimized(PROXY_LIST, hostReverse)) return /*{{PROXY_RETURN}}*/;
     return /*{{DEFAULT_ACTION}}*/;
