@@ -6,14 +6,17 @@ function FindProxyForURL(url, host) {
     
         for (var i = 0; i < sortedPrefixes.length; i++) {
             var prefix = sortedPrefixes[i];
-            if (prefix.length > str.length) break;
+            // if (prefix.length > str.length) break;
             if (str.startsWith(prefix)) return true;
         }
+        alert(sortedPrefixes);
+        alert(str);
+        alert("hasStringStartingSortedWithOptimized false");
         return false;
     }
 
     function reverseString(str) {
-        let r = '';
+        var r = '';
         for (let j = str.length - 1; j >= 0; j--) r += str[j];
         return r
     }
@@ -30,9 +33,14 @@ function FindProxyForURL(url, host) {
         isInNet(host, "127.0.0.0", "255.255.255.0")) {
         return "DIRECT";
     }
+    // alert(host);
+    // alert(PROXY_LIST);
     
-    host=reverseString(host)
-    if (DIRECT_LIST.length && hasStringStartingSortedWithOptimized(DIRECT_LIST, host)) return "DIRECT";
-    if (PROXY_LIST.length && hasStringStartingSortedWithOptimized(PROXY_LIST, host)) return /*{{PROXY_RETURN}}*/;
+    hostReverse=reverseString(host)
+    
+    // alert("hi "+host);
+
+    if (DIRECT_LIST.length && hasStringStartingSortedWithOptimized(DIRECT_LIST, hostReverse)) return "DIRECT";
+    if (PROXY_LIST.length && hasStringStartingSortedWithOptimized(PROXY_LIST, hostReverse)) return /*{{PROXY_RETURN}}*/;
     return /*{{DEFAULT_ACTION}}*/;
 }
