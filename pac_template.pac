@@ -1,25 +1,20 @@
+
+const direct_list_map = new Set(/*{{DIRECT_LIST}}*/);
+const proxy_list_map = new Set(/*{{PROXY_LIST}}*/);
+
 function FindProxyForURL(url, host) {
     
-    function hasStringStartingSortedWithOptimized(sortedPrefixes, str) {
-        if (sortedPrefixes.length === 0) return false;
-        if (sortedPrefixes[0] === "") return true;
+    function searchSuffix( set , str) {
+        if (set.length === 0) return false;
+        if (str.length === 0) return true;
     
-        for (var i = 0; i < sortedPrefixes.length; i++) {
-            var prefix = sortedPrefixes[i];
-            // if (prefix.length > str.length) break;
-            if (str.startsWith(prefix)) return true;
+        for (var i = -1; i > -(str.length+1); i--) {
+            console.log(str.slice(i,str.length));
+            if (set.has(str.slice(i,str.length))) 
+                return true;
         }
         return false;
     }
-
-    function reverseString(str) {
-        var r = '';
-        for (let j = str.length - 1; j >= 0; j--) r += str[j];
-        return r
-    }
-    
-    var PROXY_LIST = /*{{PROXY_LIST}}*/;
-    var DIRECT_LIST = /*{{DIRECT_LIST}}*/;
 
     // Local addresses always DIRECT
     if (isPlainHostName(host) || 
@@ -31,9 +26,7 @@ function FindProxyForURL(url, host) {
         return "DIRECT";
     }
     
-    hostReverse=reverseString(host)
-    
-    if (DIRECT_LIST.length && hasStringStartingSortedWithOptimized(DIRECT_LIST, hostReverse)) return "DIRECT";
-    if (PROXY_LIST.length && hasStringStartingSortedWithOptimized(PROXY_LIST, hostReverse)) return /*{{PROXY_RETURN}}*/;
+    if (searchSuffix(direct_list_map, host)) return "DIRECT";
+    if (searchSuffix(proxy_list_map, host)) return /*{{PROXY_RETURN}}*/;
     return /*{{DEFAULT_ACTION}}*/;
 }
