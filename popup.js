@@ -92,6 +92,16 @@ function addProxy(host, port, description, callback) {
         chrome.storage.sync.set({ proxies }, () => {
             loadProxies();
             showStatus('Proxy added successfully!', 'success');
+            // Immediately activate the newly added proxy
+            try {
+                const newIndex = proxies.length - 1;
+                if (newIndex >= 0) {
+                    enableProxy(newIndex);
+                }
+            } catch (e) {
+                // Ignore activation failure here; enable can still be done manually
+                console.error('Failed to auto-activate newly added proxy:', e);
+            }
             if (typeof callback === 'function') callback(true);
         });
     });
