@@ -514,3 +514,49 @@ function wireFileLoader(buttonId, inputId, textareaId) {
 
 // Wire up importer for unified hosts list
 wireFileLoader('load-hosts', 'hosts-file', 'hosts');
+
+// --- Export hosts to file ---
+async function saveHostsToFile() {
+    const textarea = document.getElementById('hosts');
+    if (!textarea) return;
+    
+    const content = textarea.value;
+    const blob = new Blob([content], { type: 'text/plain' });
+    
+    // Try using File System Access API for "Save As" dialog
+    if (window.showSaveFilePicker) {
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: 'hosts.txt',
+                types: [{
+                    description: 'Text files',
+                    accept: { 'text/plain': ['.txt'] }
+                }]
+            });
+            const writable = await handle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            showStatus('Hosts saved to file', 'success');
+            return;
+        } catch (err) {
+            // User cancelled or API not fully supported
+            if (err.name === 'AbortError') {
+                return; // User cancelled, no error message
+            }
+        }
+    }
+    
+    // Fallback: trigger download directly
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'hosts.txt';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showStatus('Hosts saved to file', 'success');
+}
+
+// Wire up save button
+document.getElementById('save-hosts').addEventListener('click', saveHostsToFile);

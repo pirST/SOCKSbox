@@ -276,7 +276,10 @@ li.active .proxy-description {
     <div style="display:block;margin-bottom:6px;">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
         <label for="hosts" style="font-weight:bold;margin:0;">Hosts (one per line):</label>
-        <button id="load-hosts" style="padding:2px 6px;font-size:12px;">Load from file</button>
+        <div style="display:flex;gap:4px;">
+          <button id="load-hosts" style="padding:2px 6px;font-size:12px;">Load from file</button>
+          <button id="save-hosts" style="padding:2px 6px;font-size:12px;">Save to file</button>
+        </div>
       </div>
       <textarea id="hosts" rows="3" style="width:100%;margin-top:6px;" placeholder="example.com
 internal.local@DIRECT
