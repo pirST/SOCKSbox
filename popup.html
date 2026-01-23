@@ -309,7 +309,14 @@ example.com@HTTP 9.10.11.12:8080
       <label style="margin-right:10px;margin-top:6px;display:inline-block;"><input type="radio" name="default-action" value="proxy"> Proxy</label>
       <label style="margin-top:6px;display:inline-block;"><input type="radio" name="default-action" value="direct"> Direct</label>
     </div>
-    <h4 style="margin:0 0 10px 0;">Saved Proxies</h4>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+      <h4 style="margin:0;">Saved Proxies</h4>
+      <div style="display:flex;gap:4px;">
+        <button id="load-proxies" style="padding:2px 6px;font-size:12px;">Load from file</button>
+        <button id="save-proxies" style="padding:2px 6px;font-size:12px;">Save to file</button>
+      </div>
+    </div>
+    <input type="file" id="proxies-file" accept=".json,.txt" style="display:none;" />
     <ul id="proxy-list" style="margin:0;"></ul>
   </div>
 

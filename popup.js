@@ -560,3 +560,132 @@ async function saveHostsToFile() {
 
 // Wire up save button
 document.getElementById('save-hosts').addEventListener('click', saveHostsToFile);
+
+// --- Export/Import proxies to/from file ---
+
+async function saveProxiesToFile() {
+    chrome.storage.sync.get('proxies', async (data) => {
+        const proxies = data.proxies || [];
+        if (proxies.length === 0) {
+            showStatus('No proxies to save', 'error');
+            return;
+        }
+        
+        const content = JSON.stringify(proxies, null, 2);
+        const blob = new Blob([content], { type: 'application/json' });
+        
+        // Try using File System Access API for "Save As" dialog
+        if (window.showSaveFilePicker) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: 'proxies.json',
+                    types: [{
+                        description: 'JSON files',
+                        accept: { 'application/json': ['.json'] }
+                    }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+                showStatus('Proxies saved to file', 'success');
+                return;
+            } catch (err) {
+                if (err.name === 'AbortError') {
+                    return; // User cancelled
+                }
+            }
+        }
+        
+        // Fallback: trigger download directly
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'proxies.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showStatus('Proxies saved to file', 'success');
+    });
+}
+
+function loadProxiesFromFile() {
+    const input = document.getElementById('proxies-file');
+    const file = input.files && input.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = () => {
+        try {
+            const imported = JSON.parse(reader.result);
+            if (!Array.isArray(imported)) {
+                showStatus('Invalid file format: expected array', 'error');
+                input.value = '';
+                return;
+            }
+            
+            // Validate and normalize each proxy
+            const validProxies = [];
+            for (const proxy of imported) {
+                if (!proxy.host || !proxy.port) {
+                    continue; // Skip invalid entries
+                }
+                validProxies.push({
+                    host: String(proxy.host),
+                    port: parseInt(proxy.port, 10),
+                    type: proxy.type || 'socks5',
+                    description: proxy.description || ''
+                });
+            }
+            
+            if (validProxies.length === 0) {
+                showStatus('No valid proxies found in file', 'error');
+                input.value = '';
+                return;
+            }
+            
+            // Merge with existing proxies, avoiding duplicates
+            chrome.storage.sync.get('proxies', (data) => {
+                const existingProxies = data.proxies || [];
+                let addedCount = 0;
+                
+                for (const newProxy of validProxies) {
+                    const exists = existingProxies.some(p => 
+                        p.host === newProxy.host && 
+                        p.port === newProxy.port &&
+                        (p.type || 'socks5') === newProxy.type
+                    );
+                    if (!exists) {
+                        existingProxies.push(newProxy);
+                        addedCount++;
+                    }
+                }
+                
+                chrome.storage.sync.set({ proxies: existingProxies }, () => {
+                    loadProxies();
+                    if (addedCount > 0) {
+                        showStatus(`Loaded ${addedCount} new prox${addedCount === 1 ? 'y' : 'ies'} from file`, 'success');
+                    } else {
+                        showStatus('All proxies from file already exist', 'success');
+                    }
+                });
+            });
+        } catch (e) {
+            showStatus('Failed to parse file: ' + e.message, 'error');
+        } finally {
+            input.value = '';
+        }
+    };
+    reader.onerror = () => {
+        showStatus('Failed to read file', 'error');
+        input.value = '';
+    };
+    reader.readAsText(file);
+}
+
+// Wire up proxy file buttons
+document.getElementById('save-proxies').addEventListener('click', saveProxiesToFile);
+document.getElementById('load-proxies').addEventListener('click', () => {
+    document.getElementById('proxies-file').click();
+});
+document.getElementById('proxies-file').addEventListener('change', loadProxiesFromFile);
