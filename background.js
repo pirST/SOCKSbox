@@ -1,10 +1,16 @@
-// Function to set SOCKS5 proxy
-function setProxy(host, port, callback) {
+// Function to set proxy (SOCKS5 or HTTP)
+function setProxy(host, port, type, callback) {
     chrome.storage.sync.get(['routingRules'], (data) => {
         const rules = data.routingRules || { hosts: [], defaultAction: 'proxy' };
+        
+        // Determine PAC directive based on proxy type
+        // SOCKS5 -> "SOCKS5 host:port"
+        // HTTP -> "PROXY host:port" (standard PAC directive for HTTP proxy)
+        const proxyType = type || 'socks5';
+        const pacDirective = proxyType === 'http' ? `PROXY ${host}:${port}` : `SOCKS5 ${host}:${port}`;
 
         const unifiedHosts = (rules.hosts || []).filter(Boolean).map(String);
-        const defaultAction = rules.defaultAction === 'direct' ? 'DIRECT' : `SOCKS5 ${host}:${port}`;
+        const defaultAction = rules.defaultAction === 'direct' ? 'DIRECT' : pacDirective;
 
         // Build [host, directive] pairs. Empty directive => use CURRENT_PROXY in PAC.
         const hostsForPac = [];
@@ -26,7 +32,14 @@ function setProxy(host, port, callback) {
                     } else if (/^socks5\s+/i.test(rawProxy)) {
                         const rest = rawProxy.replace(/^\s*socks5\s+/i, '').trim();
                         directive = `SOCKS5 ${rest}`;
+                    } else if (/^http\s+/i.test(rawProxy)) {
+                        const rest = rawProxy.replace(/^\s*http\s+/i, '').trim();
+                        directive = `PROXY ${rest}`;
+                    } else if (/^proxy\s+/i.test(rawProxy)) {
+                        const rest = rawProxy.replace(/^\s*proxy\s+/i, '').trim();
+                        directive = `PROXY ${rest}`;
                     } else {
+                        // Default to SOCKS5 for backward compatibility
                         directive = `SOCKS5 ${rawProxy}`;
                     }
                     hostsForPac.push([rawHost, directive]);
@@ -38,7 +51,7 @@ function setProxy(host, port, callback) {
         }
 
         const pacSuffixList = JSON.stringify(hostsForPac);
-        const pacCurrentProxy = JSON.stringify(`SOCKS5 ${host}:${port}`);
+        const pacCurrentProxy = JSON.stringify(pacDirective);
         const pacDefaultAction = JSON.stringify(defaultAction);
 
         const templateUrl = chrome.runtime.getURL('pac.template');
@@ -46,9 +59,9 @@ function setProxy(host, port, callback) {
             .then((resp) => resp.text())
             .then((template) => {
                 const pacScript = template
-                    .replace('/*{{SUFFIX_LIST}}*/', pacSuffixList)
-                    .replace('/*{{CURRENT_PROXY}}*/', pacCurrentProxy)
-                    .replace('/*{{DEFAULT_ACTION}}*/', pacDefaultAction);
+                    .replaceAll('/*{{SUFFIX_LIST}}*/', pacSuffixList)
+                    .replaceAll('/*{{CURRENT_PROXY}}*/', pacCurrentProxy)
+                    .replaceAll('/*{{DEFAULT_ACTION}}*/', pacDefaultAction);
 
                 console.log('=== GENERATED PAC SCRIPT ===');
                 console.log(pacScript);
@@ -113,7 +126,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ status: 'error', message: 'Host and port are required' });
                 return;
             }
-            setProxy(message.host, message.port, (success, error) => {
+            setProxy(message.host, message.port, message.type || 'socks5', (success, error) => {
                 if (success) {
                     sendResponse({ status: 'enabled' });
                 } else {
@@ -133,7 +146,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ status: 'error', message: 'Host and port are required' });
                 return;
             }
-            setProxy(message.host, message.port, (success, error) => {
+            setProxy(message.host, message.port, message.type || 'socks5', (success, error) => {
                 if (success) {
                     sendResponse({ status: 'reloaded' });
                 } else {

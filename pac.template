@@ -29,10 +29,19 @@ function FindProxyForURL(url, host) {
     if (suffix){
         const proxy = suffixMap.get(suffix);
         if (proxy)
-            return proxy
+        {
+            alert("Request for searched: " + host + " (IP: " + proxy + ")");
+            return proxy;
+        }
         else
+        {
+            alert("Request for not searched: " + host + " (IP: " + /*{{CURRENT_PROXY}}*/ + ")");
             return /*{{CURRENT_PROXY}}*/;
+        }
     }
     else
+    {
+        alert("Request for default: " + host + " (IP: " + /*{{DEFAULT_ACTION}}*/ + ")");
         return /*{{DEFAULT_ACTION}}*/;
+    }
 }

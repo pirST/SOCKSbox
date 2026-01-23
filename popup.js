@@ -12,7 +12,8 @@ function loadProxies() {
             // Check if this proxy is active
             const isActive = activeProxy && 
                            activeProxy.host === proxy.host && 
-                           activeProxy.port === proxy.port;
+                           activeProxy.port === proxy.port &&
+                           (activeProxy.type || 'socks5') === (proxy.type || 'socks5');
             
             if (isActive) {
                 li.classList.add('active');
@@ -41,7 +42,8 @@ function loadProxies() {
                 address.appendChild(indicator);
             }
             
-            address.appendChild(document.createTextNode(`${proxy.host}:${proxy.port}`));
+            const typeLabel = (proxy.type === 'http') ? '[HTTP] ' : '[SOCKS5] ';
+            address.appendChild(document.createTextNode(`${typeLabel}${proxy.host}:${proxy.port}`));
 
             // Delete button
             const deleteBtn = document.createElement('button');
@@ -68,25 +70,27 @@ function loadProxies() {
 }
 
 // Function to add a new proxy
-function addProxy(host, port, description, callback) {
+function addProxy(host, port, type, description, callback) {
     chrome.storage.sync.get('proxies', (data) => {
         const proxies = data.proxies || [];
         
-        // Check if proxy with same host and port already exists
+        // Check if proxy with same host, port and type already exists
         const existingProxy = proxies.find(p => 
             p.host === host && 
-            p.port === parseInt(port)
+            p.port === parseInt(port) &&
+            (p.type || 'socks5') === type
         );
         
         if (existingProxy) {
-            showStatus('Proxy with same address already exists!', 'error');
+            showStatus('Proxy with same address and type already exists!', 'error');
             if (typeof callback === 'function') callback(false, 'exists');
             return;
         }
         
         proxies.push({ 
             host, 
-            port: parseInt(port), 
+            port: parseInt(port),
+            type: type || 'socks5',
             description: description || ''
         });
         chrome.storage.sync.set({ proxies }, () => {
@@ -168,7 +172,8 @@ function enableProxy(index) {
             const currentActive = activeData.activeProxy;
             const isAlreadyActive = currentActive && 
                                   currentActive.host === proxy.host && 
-                                  currentActive.port === proxy.port;
+                                  currentActive.port === proxy.port &&
+                                  (currentActive.type || 'socks5') === (proxy.type || 'socks5');
 
             if (isAlreadyActive) {
                 chrome.runtime.sendMessage({ action: 'disable' }, () => {
@@ -184,12 +189,13 @@ function enableProxy(index) {
                 return;
             }
 
-            console.log(`Switching to proxy: ${proxy.host}:${proxy.port}`);
+            console.log(`Switching to proxy: ${proxy.type || 'socks5'} ${proxy.host}:${proxy.port}`);
 
             chrome.runtime.sendMessage({ 
                 action: 'enable', 
                 host: proxy.host, 
-                port: proxy.port
+                port: proxy.port,
+                type: proxy.type || 'socks5'
             }, () => {
                 if (chrome.runtime.lastError) {
                     showStatus('Error: ' + chrome.runtime.lastError.message, 'error');
@@ -227,6 +233,43 @@ function loadRoutingRules() {
         for (const radio of radios) {
             radio.checked = (radio.value === rules.defaultAction);
         }
+    });
+}
+
+// Function to save only default action (called automatically on change)
+function saveDefaultAction() {
+    const radios = document.getElementsByName('default-action');
+    let defaultAction = 'proxy';
+    for (const radio of radios) {
+        if (radio.checked) defaultAction = radio.value;
+    }
+
+    // Get existing routing rules and update only defaultAction
+    chrome.storage.sync.get(['routingRules'], (data) => {
+        const legacy = data.routingRules || {};
+        const existingHosts = Array.isArray(legacy.hosts) ? legacy.hosts : [];
+        const rules = { hosts: existingHosts, defaultAction };
+        
+        chrome.storage.sync.set({ routingRules: rules }, () => {
+            showStatus('Default action updated!', 'success');
+
+            chrome.storage.sync.get('activeProxy', (data) => {
+                if (data.activeProxy) {
+                    chrome.runtime.sendMessage({
+                        action: 'reloadPAC',
+                        host: data.activeProxy.host,
+                        port: data.activeProxy.port
+                    }, () => {
+                        if (chrome.runtime.lastError) {
+                            console.error('Error reloading PAC:', chrome.runtime.lastError.message);
+                            showStatus('Default action updated, but failed to reload proxy settings', 'error');
+                        } else {
+                            showStatus('Default action updated and proxy settings reloaded!', 'success');
+                        }
+                    });
+                }
+            });
+        });
     });
 }
 
@@ -329,7 +372,8 @@ function saveRoutingRules() {
                 chrome.runtime.sendMessage({
                     action: 'reloadPAC',
                     host: data.activeProxy.host,
-                    port: data.activeProxy.port
+                    port: data.activeProxy.port,
+                    type: data.activeProxy.type || 'socks5'
                 }, () => {
                     if (chrome.runtime.lastError) {
                         console.error('Error reloading PAC:', chrome.runtime.lastError.message);
@@ -391,12 +435,21 @@ document.addEventListener('DOMContentLoaded', () => {
             button.textContent = '+ Edit Routing Rules';
         }
     });
+
+    // Auto-save default action when radio buttons change
+    const defaultActionRadios = document.getElementsByName('default-action');
+    for (const radio of defaultActionRadios) {
+        radio.addEventListener('change', () => {
+            saveDefaultAction();
+        });
+    }
 });
 
 // Add button
 document.getElementById('add').addEventListener('click', () => {
     const address = document.getElementById('new-address').value.trim();
     const description = document.getElementById('new-description').value;
+    const type = document.getElementById('new-type').value;
 
     // Expect host:port, tolerate extra spaces
     const match = address.match(/^\s*([^:\s]+)\s*:\s*(\d{1,5})\s*$/);
@@ -411,7 +464,7 @@ document.getElementById('add').addEventListener('click', () => {
         return;
     }
 
-    addProxy(host, portNum, description, (ok) => {
+    addProxy(host, portNum, type, description, (ok) => {
         if (ok) {
             // Clear fields only when actually added
             document.getElementById('new-address').value = '';

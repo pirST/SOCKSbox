@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>SOCKS5 Proxy</title>
+  <title>SOCKSbox - Proxy Manager</title>
   <style>
 body {
     font-family: Arial, sans-serif;
@@ -256,6 +256,12 @@ li.active .proxy-description {
   <!-- Form for adding a new proxy -->
   <div id="add-form" class="add-form">
     <h4>Add new proxy</h4>
+    <label><span>Type:</span>
+      <select id="new-type" style="flex:1;padding:6px 8px;border:1px solid #ccc;border-radius:3px;font-size:14px;">
+        <option value="socks5">SOCKS5</option>
+        <option value="http">HTTP</option>
+      </select>
+    </label>
     <label><span>Address:</span> <input type="text" id="new-address" placeholder="127.0.0.1:1080"></label>
     <label><span>Description:</span> <input type="text" id="new-description" placeholder="Example: Home proxy"></label>
 
@@ -279,22 +285,30 @@ api.example.org@SOCKS5 5.6.7.8:1080"></textarea>
       <input type="file" id="hosts-file" style="display:none;" />
       <div style="color:#666;font-size:12px;margin-top:4px;line-height:1.3;">
         Use one host per line. You can specify a proxy server address independent of the current, using @addr or @DIRECT:
-        <pre style="margin:4px 0 0 0;background:#f7f7f7;padding:6px;border:1px solid #ddd;border-radius:3px;overflow:auto;">example.com
+        <pre style="margin:4px 0 0 0;background:#f7f7f7;padding:6px;border:1px solid #ddd;border-radius:3px;overflow:auto;">example.com 
+^ following the settings
 example.com@DIRECT
+^ always directly
 example.com@1.2.3.4:1080
-example.com@SOCKS5 5.6.7.8:1080</pre>
+example.com@SOCKS5 5.6.7.8:1080
+^ always use SOCKS5 specific proxy
+example.com@HTTP 9.10.11.12:8080
+^ always use HTTP specific proxy</pre>
       </div>
-    </div>
-    <div style="margin-bottom:6px;">
-      <span style="font-weight:bold;">Default action for other hosts:</span><br>
-      <label style="margin-right:10px;"><input type="radio" name="default-action" value="proxy"> Proxy</label>
-      <label><input type="radio" name="default-action" value="direct"> Direct</label>
     </div>
     <button id="save-rules" style="width:100%;margin-top:4px;">Save Routing Rules</button>
   </div>
-  <!-- List of saved proxies -->
-  <h4>Saved Proxies</h4>
-  <ul id="proxy-list"></ul>
+  
+  <!-- Default action and Saved Proxies block -->
+  <div style="background:#f4f4f4;padding:10px;border-radius:5px;margin-bottom:12px;">
+    <div style="margin-bottom:10px;">
+      <span style="font-weight:bold;">Default action for hosts not listed:</span><br>
+      <label style="margin-right:10px;margin-top:6px;display:inline-block;"><input type="radio" name="default-action" value="proxy"> Proxy</label>
+      <label style="margin-top:6px;display:inline-block;"><input type="radio" name="default-action" value="direct"> Direct</label>
+    </div>
+    <h4 style="margin:0 0 10px 0;">Saved Proxies</h4>
+    <ul id="proxy-list" style="margin:0;"></ul>
+  </div>
 
   <!-- Control/status -->
   <div id="status" class="status"></div>

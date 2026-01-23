@@ -20,6 +20,8 @@ function isHostLike(str) {
 
 function parseProxyAddress(addr) {
     const raw = String(addr || '').trim();
+    
+    // Check for explicit SOCKS5 prefix
     if (/^socks5\s+/i.test(raw)) {
         const rest = raw.replace(/^\s*socks5\s+/i, '').trim();
         const m = rest.match(/^([^:\s]+)\s*:\s*(\d{1,5})$/);
@@ -29,6 +31,30 @@ function parseProxyAddress(addr) {
         if (!isHostLike(host) || !(port >= 1 && port <= 65535)) return { error: 'Invalid SOCKS5 host or port' };
         return { value: `SOCKS5 ${host}:${port}` };
     }
+    
+    // Check for explicit HTTP prefix
+    if (/^http\s+/i.test(raw)) {
+        const rest = raw.replace(/^\s*http\s+/i, '').trim();
+        const m = rest.match(/^([^:\s]+)\s*:\s*(\d{1,5})$/);
+        if (!m) return { error: 'Invalid HTTP proxy address' };
+        const host = m[1];
+        const port = parseInt(m[2], 10);
+        if (!isHostLike(host) || !(port >= 1 && port <= 65535)) return { error: 'Invalid HTTP proxy host or port' };
+        return { value: `HTTP ${host}:${port}` };
+    }
+    
+    // Check for explicit PROXY prefix (alias for HTTP)
+    if (/^proxy\s+/i.test(raw)) {
+        const rest = raw.replace(/^\s*proxy\s+/i, '').trim();
+        const m = rest.match(/^([^:\s]+)\s*:\s*(\d{1,5})$/);
+        if (!m) return { error: 'Invalid PROXY address' };
+        const host = m[1];
+        const port = parseInt(m[2], 10);
+        if (!isHostLike(host) || !(port >= 1 && port <= 65535)) return { error: 'Invalid PROXY host or port' };
+        return { value: `HTTP ${host}:${port}` };
+    }
+    
+    // Default: just host:port - treat as SOCKS5 for backward compatibility
     const m = raw.match(/^([^:\s]+)\s*:\s*(\d{1,5})$/);
     if (!m) return { error: 'Invalid proxy address' };
     const host = m[1];
