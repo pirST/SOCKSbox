@@ -1,9 +1,9 @@
 # SOCKS5 Proxy Manager Chrome Extension
 
-A Chrome extension for managing SOCKS5 proxy connections with an intuitive user interface.
+A Chrome extension for managing SOCKS5 and HTTP proxy connections with an intuitive user interface.
 
 ## Features
--  **Simple Proxy Management**: Add, remove, and switch between multiple SOCKS5 proxy servers
+-  **Simple Proxy Management**: Add, remove, and switch between multiple proxy servers
 -  **Active Proxy Indicator**: Clearly see which proxy is currently active
 -  **Persistent Storage**: Proxy configurations are saved and persist between browser sessions
 -  **Connection Management**: When you delete an active proxy, the connection is automatically disabled
