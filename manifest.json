@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SOCKSbox",
-  "version": "0.2",
+  "version": "0.5.1",
   "description": "Extension to manage multiple SOCKS5 and HTTP proxies",
   "permissions": ["proxy", "storage"],
   "background": {

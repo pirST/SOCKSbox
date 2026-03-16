@@ -11,6 +11,9 @@ A Chrome extension for managing SOCKS5 and HTTP proxy connections with an intuit
 -  **Default Actions**: Set default behavior for traffic not matching specific rules
 
 ## Installation
+[From Crome web store](https://chromewebstore.google.com/detail/dgficjijdoahejlbjbebhbjajjakhibn?utm_source=item-share-cb)
+
+Or manual:
 1. Download or clone this repository
 2. Open Chrome and navigate to `chrome://extensions/`
 3. Enable "Developer mode" in the top right corner
